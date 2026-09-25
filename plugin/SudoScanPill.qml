@@ -6,6 +6,7 @@ Item {
 
   property string scanState: "scanning"
   property string assetSource: ""
+  property string successAssetSource: ""
 
   implicitWidth: 72
   implicitHeight: 72
@@ -14,6 +15,7 @@ Item {
     anchors.fill: parent
     faceState: root.scanState
     assetSource: root.assetSource
+    successAssetSource: root.successAssetSource
     compact: true
   }
 }

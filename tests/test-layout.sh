@@ -13,6 +13,7 @@ required=(
   plugin/SudoScanPill.qml
   plugin/FaceAuthSocket.qml
   plugin/FaceAuthClient.qml
+  assets/omarchy-logo-hackerman.png
   sddm/Main.qml
   sddm/metadata.desktop
   root/src/omaid-notify.c

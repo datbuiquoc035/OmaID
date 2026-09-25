@@ -6,11 +6,11 @@ The stock `omarchy.lock` service is cloned into a user-owned plugin. The clone k
 
 The overlay adds:
 
-- a root bridge request for face authentication, with a five-second delay after the lock surface becomes secure;
+- an immediate root bridge request for face authentication after the lock surface becomes secure;
 - enrollment/availability probing through `facelock is-enrolled --quiet`;
-- a face state machine for idle, scanning, success, failure, and unavailable states;
+- a top-center face state machine for idle, scanning, success, failure, and unavailable states, with the OmaID logo shown on success;
 - a user-runtime socket server for sudo visual events;
-- a top-center, focus-free sudo scan pill.
+- a top-center, focus-free sudo scan pill that shows the OmaID logo after successful face authentication.
 
 Password and fingerprint PAM contexts remain separate. The lock face path uses the root bridge because the Quickshell PAM subprocess is non-root and has no logind session; the bridge invokes Facelock directly as root and returns only a request-correlated result. A face result never creates a public unlock IPC method.
 

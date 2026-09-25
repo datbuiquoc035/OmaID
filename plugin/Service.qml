@@ -17,6 +17,7 @@ Item {
   readonly property string userName: Quickshell.env("USER") || Quickshell.env("LOGNAME")
   readonly property string currentBackgroundLink: stateHome + "/omarchy/current/background"
   readonly property string faceAssetSource: Qt.resolvedUrl("assets/face-id/face.svg")
+  readonly property string faceSuccessAssetSource: Qt.resolvedUrl("assets/omarchy-logo-hackerman.png")
 
   property bool lockRequested: false
   property bool pendingSessionLock: false
@@ -32,7 +33,6 @@ Item {
   property int faceAttempts: 0
   property int faceRequestCounter: 0
   property string faceRequestId: ""
-  readonly property int faceStartDelayMs: 5000
   property bool sudoScanVisible: false
   property string sudoScanState: "idle"
   property string sudoScanRequest: ""
@@ -146,7 +146,6 @@ Item {
     faceAttempts = 0
     faceState = faceConfigured ? "idle" : "unavailable"
     fingerprintRetryTimer.stop()
-    faceStartDelayTimer.stop()
     faceRetryTimer.stop()
     faceSuccessTimer.stop()
     faceBridge.cancel()
@@ -206,7 +205,6 @@ Item {
   }
 
   function cancelFaceScan() {
-    faceStartDelayTimer.stop()
     faceRetryTimer.stop()
     faceBridge.cancel()
     faceRequestId = ""
@@ -277,9 +275,9 @@ Item {
   function scheduleFaceStart() {
     if (!lockRequested || !sessionLock.secure || fingerprintConfigured) return
     if (!faceBridgeConfigured || !faceConfigured || faceAuthenticating) return
-    if (enteredPassword.length > 0 || faceAttempts >= 2 || faceStartDelayTimer.running) return
+    if (enteredPassword.length > 0 || faceAttempts >= 2) return
 
-    faceStartDelayTimer.restart()
+    startFace()
   }
 
   function startFace() {
@@ -336,6 +334,7 @@ Item {
     if (!event.request) return
 
     if (event.event === "begin") {
+      sudoSuccessTimer.stop()
       sudoScanRequest = String(event.request)
       sudoScanState = "scanning"
       sudoScanVisible = true
@@ -346,13 +345,17 @@ Item {
     if (event.request !== sudoScanRequest) return
 
     if (event.event === "fallback") {
+      sudoSuccessTimer.stop()
       sudoScanState = "failed"
       sudoScanVisible = false
       sudoScanTimeout.stop()
     } else if (event.event === "end") {
-      sudoScanState = "success"
-      sudoScanVisible = false
       sudoScanTimeout.stop()
+      if (sudoScanState !== "failed") {
+        sudoScanState = "success"
+        sudoScanVisible = true
+        sudoSuccessTimer.restart()
+      }
       sudoScanRequest = ""
     }
   }
@@ -405,6 +408,7 @@ Item {
         faceConfigured: root.faceConfigured
         faceState: root.faceState
         faceAssetSource: root.faceAssetSource
+        faceSuccessAssetSource: root.faceSuccessAssetSource
         authenticatingPassword: root.authenticatingPassword
         failureMessage: root.failureMessage
         failedAttempts: root.failedAttempts
@@ -441,6 +445,7 @@ Item {
       faceConfigured: root.faceConfigured
       faceState: root.faceState
       faceAssetSource: root.faceAssetSource
+      faceSuccessAssetSource: root.faceSuccessAssetSource
       authenticatingPassword: false
       failureMessage: ""
       failedAttempts: 0
@@ -486,6 +491,7 @@ Item {
       anchors.centerIn: parent
       scanState: root.sudoScanState
       assetSource: root.faceAssetSource
+      successAssetSource: root.faceSuccessAssetSource
     }
   }
 
@@ -534,13 +540,6 @@ Item {
   }
 
   Timer {
-    id: faceStartDelayTimer
-    interval: root.faceStartDelayMs
-    repeat: false
-    onTriggered: root.startFace()
-  }
-
-  Timer {
     id: faceRetryTimer
     interval: 1800
     repeat: false
@@ -552,6 +551,13 @@ Item {
     interval: 350
     repeat: false
     onTriggered: root.finishUnlock()
+  }
+
+  Timer {
+    id: sudoSuccessTimer
+    interval: 1000
+    repeat: false
+    onTriggered: root.sudoScanVisible = false
   }
 
   Timer {
@@ -777,8 +783,6 @@ Item {
          faceBridge: root.faceBridgeConfigured,
          faceConfigured: root.faceConfigured,
          faceState: root.faceState,
-        faceStartDelayMs: root.faceStartDelayMs,
-        faceStartDelayPending: faceStartDelayTimer.running,
         faceAuthenticating: root.faceAuthenticating,
         sudoScanVisible: root.sudoScanVisible,
         sudoScanState: root.sudoScanState,

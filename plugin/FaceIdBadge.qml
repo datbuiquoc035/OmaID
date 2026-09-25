@@ -6,11 +6,13 @@ Item {
 
   property string faceState: "idle"
   property string assetSource: ""
+  property string successAssetSource: ""
   property bool compact: false
 
   readonly property int badgeSize: compact ? 72 : 104
   readonly property int imageSize: compact ? 42 : 58
   readonly property int radius: compact ? 20 : 28
+  readonly property bool showSuccessAsset: faceState === "success" && successAssetSource.length > 0
   readonly property color stateColor: faceState === "success"
     ? "#5fd18b"
     : faceState === "failed" || faceState === "error"
@@ -48,12 +50,26 @@ Item {
       fillMode: Image.PreserveAspectCrop
       asynchronous: true
       cache: false
-      visible: status === Image.Ready
+      visible: !root.showSuccessAsset && status === Image.Ready
+    }
+
+    Image {
+      id: successImage
+      anchors.centerIn: parent
+      width: root.imageSize
+      height: root.imageSize
+      source: root.successAssetSource
+      fillMode: Image.PreserveAspectFit
+      asynchronous: true
+      cache: false
+      visible: root.showSuccessAsset && status === Image.Ready
     }
 
     Text {
       anchors.centerIn: parent
-      visible: faceImage.status !== Image.Ready
+      visible: root.showSuccessAsset
+        ? successImage.status !== Image.Ready
+        : faceImage.status !== Image.Ready
       text: "☺"
       color: root.stateColor
       font.family: Style.font.family

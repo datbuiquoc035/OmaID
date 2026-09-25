@@ -18,6 +18,7 @@ Item {
   property bool faceConfigured: false
   property string faceState: "idle"
   property string faceAssetSource: ""
+  property string faceSuccessAssetSource: ""
 
   readonly property string placeholderText: "Enter Password"
   readonly property int fieldWidth: 381
@@ -209,13 +210,14 @@ Item {
 
     FaceIdBadge {
       anchors.horizontalCenter: parent.horizontalCenter
-      anchors.bottom: inputField.top
-      anchors.bottomMargin: 30
+      anchors.top: parent.top
+      anchors.topMargin: 48
       width: 104
       height: 104
       visible: root.faceConfigured
       faceState: root.faceState
       assetSource: root.faceAssetSource
+      successAssetSource: root.faceSuccessAssetSource
     }
   }
 }

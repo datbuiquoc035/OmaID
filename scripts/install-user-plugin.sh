@@ -30,7 +30,7 @@ fi
 if ((apply == 0)); then
   printf 'dry-run: would ensure %s\n' "$target_dir"
   printf 'dry-run: would overlay Service.qml, LockView.qml, FaceIdBadge.qml, SudoScanPill.qml, FaceAuthSocket.qml, FaceAuthClient.qml\n'
-  printf 'dry-run: would copy assets/face-id when present\n'
+  printf 'dry-run: would copy face and success assets when present\n'
   if ((restart)); then printf 'dry-run: would run omarchy restart shell\n'; fi
   exit 0
 fi
@@ -52,6 +52,11 @@ done
 if [[ -f "$root_dir/assets/face-id/face.svg" ]]; then
   install -d -m 0755 "$target_dir/assets/face-id"
   install -m 0644 "$root_dir/assets/face-id/face.svg" "$target_dir/assets/face-id/face.svg"
+fi
+
+if [[ -f "$root_dir/assets/omarchy-logo-hackerman.png" ]]; then
+  install -d -m 0755 "$target_dir/assets"
+  install -m 0644 "$root_dir/assets/omarchy-logo-hackerman.png" "$target_dir/assets/omarchy-logo-hackerman.png"
 fi
 
 omarchy plugin validate "$target_dir"
