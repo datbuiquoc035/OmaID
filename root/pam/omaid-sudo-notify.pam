@@ -1,0 +1,6 @@
+auth     optional   pam_exec.so quiet /usr/libexec/omaid/omaid-notify begin
+auth     sufficient pam_facelock.so
+auth     optional   pam_exec.so quiet /usr/libexec/omaid/omaid-notify fallback
+auth     include    system-auth
+account  include    system-auth
+account  optional   pam_exec.so quiet /usr/libexec/omaid/omaid-notify end

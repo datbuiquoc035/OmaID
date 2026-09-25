@@ -1,0 +1,28 @@
+[Unit]
+Description=OmaID root face authentication bridge
+After=local-fs.target
+
+[Service]
+Type=simple
+ExecStart=/usr/libexec/omaid/omaid-face-bridge --user @USER@
+User=root
+Group=root
+RuntimeDirectory=omaid
+RuntimeDirectoryMode=0755
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=yes
+ReadWritePaths=/run/omaid /var/lib/facelock /var/log/facelock
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictNamespaces=yes
+LockPersonality=yes
+RestrictRealtime=yes
+RestrictSUIDSGID=yes
+RestrictAddressFamilies=AF_UNIX AF_NETLINK
+IPAddressDeny=any
+LimitNOFILE=256
+StandardOutput=journal
+StandardError=journal

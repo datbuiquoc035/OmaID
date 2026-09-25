@@ -1,0 +1,15 @@
+build/
+dist/
+out/
+.cache/
+__pycache__/
+*.sock
+*.log
+*.db
+*.db-wal
+*.db-shm
+*.key
+*.sealed
+.env
+.pam-backup/
+.omaid-state/

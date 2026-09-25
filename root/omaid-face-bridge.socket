@@ -1,0 +1,14 @@
+[Unit]
+Description=OmaID root face authentication bridge socket
+
+[Socket]
+ListenStream=/run/omaid/face-auth.sock
+SocketMode=0600
+SocketUser=@USER@
+SocketGroup=@USER@
+DirectoryMode=0755
+RemoveOnStop=yes
+Service=omaid-face-bridge.service
+
+[Install]
+WantedBy=sockets.target

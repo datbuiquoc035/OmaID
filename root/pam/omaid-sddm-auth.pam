@@ -1,0 +1,4 @@
+#%PAM-1.0
+auth        required   pam_shells.so
+auth        requisite  pam_nologin.so
+auth        include    sddm-password

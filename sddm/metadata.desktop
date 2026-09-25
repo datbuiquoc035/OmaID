@@ -1,0 +1,9 @@
+[SddmGreeterTheme]
+Type=sddm-theme
+Name=OmaID
+Description=Omarchy greeter with OmaID face status
+Author=OmaID
+Version=0.1.0
+Copyright=OmaID
+License=GPL-3.0-or-later
+QtVersion=6
