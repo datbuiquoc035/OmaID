@@ -77,8 +77,30 @@ else
   printf 'skip     json  jq unavailable\n'
 fi
 
-if command -v qmllint >/dev/null 2>&1; then
-  if qmllint plugin/Service.qml plugin/LockView.qml plugin/FaceIdBadge.qml plugin/SudoScanPill.qml plugin/FaceAuthSocket.qml plugin/FaceAuthClient.qml sddm/Main.qml; then
+qml_files=(
+  plugin/Service.qml
+  plugin/LockView.qml
+  plugin/FaceIdBadge.qml
+  plugin/SuccessMark.qml
+  plugin/SudoScanPill.qml
+  plugin/FaceAuthSocket.qml
+  plugin/FaceAuthClient.qml
+  sddm/Main.qml
+  tests/qml/tst_successmark.qml
+  tests/qml/tst_faceidbadge.qml
+)
+
+# The Qt 6 tools are not on PATH on a stock Arch install, so look in the
+# location qt6-base actually installs them to before giving up on the lint.
+qmllint_bin=$(command -v qmllint || true)
+if [[ -z "$qmllint_bin" ]]; then
+  for candidate in /usr/lib/qt6/bin/qmllint /usr/lib/qt6/libexec/qmllint; do
+    [[ -x "$candidate" ]] && { qmllint_bin="$candidate"; break; }
+  done
+fi
+
+if [[ -n "$qmllint_bin" ]]; then
+  if "$qmllint_bin" "${qml_files[@]}"; then
     printf 'ok       qml   source files\n'
   else
     printf 'invalid  qml   source files\n'

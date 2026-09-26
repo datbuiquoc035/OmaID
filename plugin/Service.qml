@@ -18,6 +18,12 @@ Item {
   readonly property string currentBackgroundLink: stateHome + "/omarchy/current/background"
   readonly property string faceAssetSource: Qt.resolvedUrl("assets/face-id/face.svg")
   readonly property string faceSuccessAssetSource: Qt.resolvedUrl("assets/omarchy-logo-hackerman.png")
+  // "mark" draws the animated Omarchy geometry, "image" falls back to the
+  // bundled raster. The raster stays the escape hatch for a Qt too old for
+  // ShapePath.trim; the mark needs Qt 6.10 or newer.
+  readonly property string faceSuccessStyle: Quickshell.env("OMAID_SUCCESS_STYLE") || "mark"
+  // No reduced-motion query exists in QML, so honour the environment instead.
+  readonly property bool faceMotionEnabled: Quickshell.env("OMAID_MOTION") !== "0"
 
   property bool lockRequested: false
   property bool pendingSessionLock: false
@@ -409,6 +415,8 @@ Item {
         faceState: root.faceState
         faceAssetSource: root.faceAssetSource
         faceSuccessAssetSource: root.faceSuccessAssetSource
+        faceSuccessStyle: root.faceSuccessStyle
+        faceMotionEnabled: root.faceMotionEnabled
         authenticatingPassword: root.authenticatingPassword
         failureMessage: root.failureMessage
         failedAttempts: root.failedAttempts
@@ -446,6 +454,8 @@ Item {
       faceState: root.faceState
       faceAssetSource: root.faceAssetSource
       faceSuccessAssetSource: root.faceSuccessAssetSource
+      faceSuccessStyle: root.faceSuccessStyle
+      faceMotionEnabled: root.faceMotionEnabled
       authenticatingPassword: false
       failureMessage: ""
       failedAttempts: 0
@@ -492,6 +502,8 @@ Item {
       scanState: root.sudoScanState
       assetSource: root.faceAssetSource
       successAssetSource: root.faceSuccessAssetSource
+      successStyle: root.faceSuccessStyle
+      motionEnabled: root.faceMotionEnabled
     }
   }
 
@@ -548,14 +560,16 @@ Item {
 
   Timer {
     id: faceSuccessTimer
-    interval: 350
+    // Outlasts SuccessMark.totalDuration so the draw finishes before the
+    // session unlocks. tests/test-templates.sh keeps the two in step.
+    interval: 1100
     repeat: false
     onTriggered: root.finishUnlock()
   }
 
   Timer {
     id: sudoSuccessTimer
-    interval: 1000
+    interval: 1200
     repeat: false
     onTriggered: root.sudoScanVisible = false
   }

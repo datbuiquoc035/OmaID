@@ -19,6 +19,8 @@ Item {
   property string faceState: "idle"
   property string faceAssetSource: ""
   property string faceSuccessAssetSource: ""
+  property string faceSuccessStyle: "mark"
+  property bool faceMotionEnabled: true
 
   readonly property string placeholderText: "Enter Password"
   readonly property int fieldWidth: 381
@@ -218,6 +220,8 @@ Item {
       faceState: root.faceState
       assetSource: root.faceAssetSource
       successAssetSource: root.faceSuccessAssetSource
+      successStyle: root.faceSuccessStyle
+      motionEnabled: root.faceMotionEnabled
     }
   }
 }

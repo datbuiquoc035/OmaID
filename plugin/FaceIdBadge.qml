@@ -7,12 +7,17 @@ Item {
   property string faceState: "idle"
   property string assetSource: ""
   property string successAssetSource: ""
+  property string successStyle: "mark"
+  property bool motionEnabled: true
   property bool compact: false
 
   readonly property int badgeSize: compact ? 72 : 104
   readonly property int imageSize: compact ? 42 : 58
   readonly property int radius: compact ? 20 : 28
-  readonly property bool showSuccessAsset: faceState === "success" && successAssetSource.length > 0
+  // "mark" draws the animated Omarchy geometry, "image" falls back to the
+  // bundled raster. The raster is only the fallback, so the two never overlap.
+  readonly property bool useSuccessMark: faceState === "success" && successStyle === "mark"
+  readonly property bool showSuccessAsset: faceState === "success" && !useSuccessMark && successAssetSource.length > 0
   readonly property color stateColor: faceState === "success"
     ? "#5fd18b"
     : faceState === "failed" || faceState === "error"
@@ -43,6 +48,7 @@ Item {
 
     Image {
       id: faceImage
+      objectName: "faceImage"
       anchors.centerIn: parent
       width: root.imageSize
       height: root.imageSize
@@ -55,6 +61,7 @@ Item {
 
     Image {
       id: successImage
+      objectName: "successImage"
       anchors.centerIn: parent
       width: root.imageSize
       height: root.imageSize
@@ -65,11 +72,23 @@ Item {
       visible: root.showSuccessAsset && status === Image.Ready
     }
 
+    SuccessMark {
+      objectName: "successMark"
+      anchors.centerIn: parent
+      width: root.imageSize
+      height: root.imageSize
+      markColor: root.stateColor
+      motionEnabled: root.motionEnabled
+      active: root.useSuccessMark
+    }
+
     Text {
       anchors.centerIn: parent
-      visible: root.showSuccessAsset
-        ? successImage.status !== Image.Ready
-        : faceImage.status !== Image.Ready
+      visible: root.useSuccessMark
+        ? false
+        : root.showSuccessAsset
+          ? successImage.status !== Image.Ready
+          : faceImage.status !== Image.Ready
       text: "☺"
       color: root.stateColor
       font.family: Style.font.family

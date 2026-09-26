@@ -13,6 +13,7 @@ required=(
   plugin/Service.qml
   plugin/LockView.qml
   plugin/FaceIdBadge.qml
+  plugin/SuccessMark.qml
   plugin/SudoScanPill.qml
   plugin/FaceAuthSocket.qml
   plugin/FaceAuthClient.qml
@@ -33,6 +34,11 @@ required=(
   scripts/install-sddm.sh
   scripts/install-sudo-notifier.sh
   scripts/pam-sudo-notifier.py
+  tests/qml/tst_successmark.qml
+  tests/qml/tst_faceidbadge.qml
+  tests/qml/stubs/qs/Commons/qmldir
+  tests/qml/stubs/qs/Commons/Color.qml
+  tests/qml/stubs/qs/Commons/Style.qml
 )
 
 for path in "${required[@]}"; do

@@ -29,7 +29,7 @@ fi
 
 if ((apply == 0)); then
   printf 'dry-run: would ensure %s\n' "$target_dir"
-  printf 'dry-run: would overlay Service.qml, LockView.qml, FaceIdBadge.qml, SudoScanPill.qml, FaceAuthSocket.qml, FaceAuthClient.qml\n'
+  printf 'dry-run: would overlay Service.qml, LockView.qml, FaceIdBadge.qml, SudoScanPill.qml, SuccessMark.qml, FaceAuthSocket.qml, FaceAuthClient.qml\n'
   printf 'dry-run: would stamp manifest.json as OmaID with id %s\n' "$target_id"
   printf 'dry-run: would copy face and success assets when present\n'
   if ((restart)); then printf 'dry-run: would run omarchy restart shell\n'; fi
@@ -51,7 +51,7 @@ command -v jq >/dev/null 2>&1 || { printf 'jq is required to stamp the manifest\
 jq -e '.omarchy.clonedFrom == "omarchy.lock"' "$target_dir/manifest.json" >/dev/null 2>&1 \
   || { printf 'refusing to stamp: %s is not an omarchy.lock clone\n' "$target_dir" >&2; exit 1; }
 
-for file in Service.qml LockView.qml FaceIdBadge.qml SudoScanPill.qml FaceAuthSocket.qml FaceAuthClient.qml; do
+for file in Service.qml LockView.qml FaceIdBadge.qml SudoScanPill.qml SuccessMark.qml FaceAuthSocket.qml FaceAuthClient.qml; do
   install -m 0644 "$root_dir/plugin/$file" "$target_dir/$file"
 done
 

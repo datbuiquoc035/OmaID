@@ -7,6 +7,8 @@ Item {
   property string scanState: "scanning"
   property string assetSource: ""
   property string successAssetSource: ""
+  property string successStyle: "mark"
+  property bool motionEnabled: true
 
   implicitWidth: 72
   implicitHeight: 72
@@ -16,6 +18,8 @@ Item {
     faceState: root.scanState
     assetSource: root.assetSource
     successAssetSource: root.successAssetSource
+    successStyle: root.successStyle
+    motionEnabled: root.motionEnabled
     compact: true
   }
 }
