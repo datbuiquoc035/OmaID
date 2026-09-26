@@ -13,3 +13,4 @@ __pycache__/
 .env
 .pam-backup/
 .omaid-state/
+previews/
