@@ -7,6 +7,8 @@ cd "$root_dir"
 required=(
   README.md
   VERSION
+  install.sh
+  uninstall.sh
   plugin/manifest.json
   plugin/Service.qml
   plugin/LockView.qml
@@ -31,11 +33,14 @@ required=(
   scripts/install-sddm.sh
   scripts/install-sudo-notifier.sh
   scripts/pam-sudo-notifier.py
-  scripts/uninstall.sh
 )
 
 for path in "${required[@]}"; do
   [[ -f "$path" ]] || { printf 'missing %s\n' "$path" >&2; exit 1; }
+done
+
+for path in install.sh uninstall.sh scripts/*.sh; do
+  [[ -x "$path" ]] || { printf '%s is not executable\n' "$path" >&2; exit 1; }
 done
 
 version=$(<VERSION)

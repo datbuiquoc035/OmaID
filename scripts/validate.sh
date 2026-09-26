@@ -21,7 +21,7 @@ check_shell() {
   rm -f "$error_file"
 }
 
-for script in scripts/*.sh; do
+for script in install.sh uninstall.sh scripts/*.sh; do
   check_shell "$script"
 done
 

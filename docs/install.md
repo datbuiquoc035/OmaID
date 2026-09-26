@@ -2,6 +2,15 @@
 
 Installation is intentionally split.
 
+`./install.sh` sequences the steps below and escalates only the ones that need root. It is dry-run by default. Run it as your normal user: under `sudo` the plugin step would install as `root.lock` instead of `<you>.lock`, so it refuses to start as root.
+
+```bash
+./install.sh --dry-run   # plan for the default surfaces: plugin root
+./install.sh --apply
+```
+
+The per-surface scripts documented here remain the source of truth and can still be run individually.
+
 ## 1. Dependencies
 
 ```bash
@@ -64,6 +73,13 @@ omarchy-shell lock lock
 ```
 
 Keep a root recovery shell available while testing any PAM change.
+
+`./uninstall.sh` reverses this, with the same surface names and the same dry-run default:
+
+```bash
+./uninstall.sh --dry-run
+./uninstall.sh --apply
+```
 
 ## 4. SDDM
 
