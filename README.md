@@ -2,6 +2,8 @@
 
 OmaID is an Omarchy face-authentication integration built around Facelock.
 
+![OmaID lock screen with the face badge and password field](preview.png)
+
 The project targets four surfaces:
 
 - the SDDM login greeter;

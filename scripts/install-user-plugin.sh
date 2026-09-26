@@ -30,6 +30,7 @@ fi
 if ((apply == 0)); then
   printf 'dry-run: would ensure %s\n' "$target_dir"
   printf 'dry-run: would overlay Service.qml, LockView.qml, FaceIdBadge.qml, SudoScanPill.qml, FaceAuthSocket.qml, FaceAuthClient.qml\n'
+  printf 'dry-run: would stamp manifest.json as OmaID with id %s\n' "$target_id"
   printf 'dry-run: would copy face and success assets when present\n'
   if ((restart)); then printf 'dry-run: would run omarchy restart shell\n'; fi
   exit 0
@@ -45,9 +46,19 @@ fi
 
 [[ -f "$target_dir/manifest.json" ]] || { printf 'missing clone manifest: %s\n' "$target_dir/manifest.json" >&2; exit 1; }
 
+command -v jq >/dev/null 2>&1 || { printf 'jq is required to stamp the manifest\n' >&2; exit 1; }
+
+jq -e '.omarchy.clonedFrom == "omarchy.lock"' "$target_dir/manifest.json" >/dev/null 2>&1 \
+  || { printf 'refusing to stamp: %s is not an omarchy.lock clone\n' "$target_dir" >&2; exit 1; }
+
 for file in Service.qml LockView.qml FaceIdBadge.qml SudoScanPill.qml FaceAuthSocket.qml FaceAuthClient.qml; do
   install -m 0644 "$root_dir/plugin/$file" "$target_dir/$file"
 done
+
+manifest_tmp=$(mktemp)
+jq --arg id "$target_id" '.id = $id' "$root_dir/plugin/manifest.json" >"$manifest_tmp"
+install -m 0644 "$manifest_tmp" "$target_dir/manifest.json"
+rm -f "$manifest_tmp"
 
 if [[ -f "$root_dir/assets/face-id/face.svg" ]]; then
   install -d -m 0755 "$target_dir/assets/face-id"

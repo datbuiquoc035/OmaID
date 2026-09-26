@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "id": "local.omaid.faceid",
+  "name": "OmaID",
+  "version": "0.1.0-alpha",
+  "author": "datbuiquoc035",
+  "description": "Omarchy face authentication for the session lock, SDDM greeter, sudo, and polkit.",
+  "omarchy": {
+    "capabilities": [
+      "authentication"
+    ],
+    "clonedFrom": "omarchy.lock"
+  },
+  "kinds": [
+    "service"
+  ],
+  "keepLoaded": true,
+  "entryPoints": {
+    "service": "Service.qml"
+  }
+}

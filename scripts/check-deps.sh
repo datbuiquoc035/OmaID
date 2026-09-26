@@ -27,6 +27,7 @@ check_command pacman
 check_command yay
 check_command facelock
 check_command omarchy
+check_command jq
 check_path /usr/lib/security/pam_facelock.so
 check_path /dev/video2
 check_path /dev/tpmrm0

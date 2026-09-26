@@ -57,6 +57,26 @@ else
   printf 'skip     python compiler unavailable\n'
 fi
 
+if command -v jq >/dev/null 2>&1; then
+  if jq -e '
+        .schemaVersion == 1
+        and (.id | test("^[A-Za-z0-9][A-Za-z0-9._-]*$"))
+        and (.id | contains("..") | not)
+        and (.id | startswith("omarchy.") | not)
+        and (.name | type == "string" and length > 0)
+        and (.version | type == "string" and length > 0)
+        and (.kinds | type == "array" and length > 0)
+        and (.entryPoints | type == "object")
+      ' plugin/manifest.json >/dev/null; then
+    printf 'ok       json  plugin/manifest.json\n'
+  else
+    printf 'invalid  json  plugin/manifest.json\n'
+    status=1
+  fi
+else
+  printf 'skip     json  jq unavailable\n'
+fi
+
 if command -v qmllint >/dev/null 2>&1; then
   if qmllint plugin/Service.qml plugin/LockView.qml plugin/FaceIdBadge.qml plugin/SudoScanPill.qml plugin/FaceAuthSocket.qml plugin/FaceAuthClient.qml sddm/Main.qml; then
     printf 'ok       qml   source files\n'
