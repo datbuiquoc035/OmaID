@@ -164,21 +164,27 @@ Item {
   }
 
   // Fixed 3s hold before fingerprint/face may start. Password stays live the
-  // whole time. Called on every normal lock and re-armed on resume-from-suspend
-  // (see resumeHeartbeat) so lid-close and `systemctl suspend` share one path.
+  // whole time. Armed on every normal lock; re-armed on resume-from-suspend
+  // (resumeHeartbeat, biometricSettleTimer's own frozen-check) and on lid-open
+  // display return (onScreensChanged) so `systemctl suspend` and lid-close
+  // share one settling path.
   function armBiometricSettle() {
     biometricsReady = false
+    biometricSettleTimer.armedAt = Date.now()
     biometricSettleTimer.restart()
     resumeHeartbeat.lastBeat = Date.now()
     if (!resumeHeartbeat.running) resumeHeartbeat.start()
   }
 
-  function handleResumeGap() {
+  function handleResumeGap(reason) {
     if (!lockRequested) return
+    // Never extend a hold already in progress; only start a fresh one once
+    // settled. This keeps display flapping from postponing biometrics forever.
+    if (!biometricsReady) return
     if (fingerprintPam.active) fingerprintPam.abort()
     fingerprintAuthenticating = false
     cancelFaceScan()
-    logEvent("resume: biometrics-settling")
+    logEvent(reason + ": biometrics-settling")
     armBiometricSettle()
   }
 
@@ -584,7 +590,23 @@ Item {
     id: biometricSettleTimer
     interval: 3000
     repeat: false
+    property double armedAt: 0
     onTriggered: {
+      // A countdown frozen by suspend fires right after resume (same pattern
+      // as idleBlankTimer): going ready here would start the camera on a
+      // half-woken machine, so take a fresh 3s run-up instead. Re-arm
+      // directly: handleResumeGap's settled-only guard would refuse, but a
+      // suspend-interrupted hold is stale, not in progress.
+      if (Date.now() - armedAt > interval + 2000) {
+        if (root.lockRequested) {
+          root.logEvent("resume: settle-frozen")
+          if (fingerprintPam.active) fingerprintPam.abort()
+          root.fingerprintAuthenticating = false
+          root.cancelFaceScan()
+          root.armBiometricSettle()
+        }
+        return
+      }
       root.biometricsReady = true
       root.logEvent("biometrics-ready")
       if (root.lockRequested && sessionLock.secure) {
@@ -602,10 +624,10 @@ Item {
     onTriggered: {
       var now = Date.now()
       // Frozen across suspend, so a wall-clock jump here means resume.
-      // Covers both `systemctl suspend` and lid-close suspend with one path.
+      // Covers `systemctl suspend` resumes without display changes.
       if (lastBeat > 0 && now - lastBeat > interval + 1500) {
         lastBeat = now
-        root.handleResumeGap()
+        root.handleResumeGap("resume")
         return
       }
       lastBeat = now
@@ -781,6 +803,13 @@ Item {
     target: Quickshell
     function onScreensChanged() {
       root.requestSessionLock()
+
+      // Lid open returns the panel as a new screen set while the session is
+      // still locked. The 3s hold armed at lock time (lid close) is long
+      // expired by then, so settle the camera/display again. handleResumeGap
+      // only re-arms once settled, so close/open flapping cannot loop it.
+      // (Side effect: external monitor hotplug while locked also re-holds.)
+      root.handleResumeGap("screens-changed")
 
       // A monitor still coming up has no workspace, so cannot answer yet.
       strandedLockRetryTimer.rearm()

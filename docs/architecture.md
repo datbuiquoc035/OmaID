@@ -6,7 +6,8 @@ The stock `omarchy.lock` service is cloned into a user-owned plugin. The clone k
 
 The overlay adds:
 
-- an immediate root bridge request for face authentication after the lock surface becomes secure;
+- an immediate root bridge request for face authentication after the lock surface becomes secure and the settle hold expires;
+- a fixed 3s biometric settle hold before fingerprint/face may start (password stays live). It is armed on every lock and re-armed on resume-from-suspend (heartbeat wall-clock gap plus the settle timer's own frozen-check) and on lid-open display return (`screensChanged` while locked, settled-only so flapping cannot loop it). The lock shows a dimmed `Waking…` state while settling;
 - enrollment/availability probing through `facelock is-enrolled --quiet`;
 - a top-center face state machine for idle, scanning, success, failure, and unavailable states, with the Omarchy mark drawn on success;
 - a user-runtime socket server for sudo visual events;
