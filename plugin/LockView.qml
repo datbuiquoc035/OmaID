@@ -21,6 +21,8 @@ Item {
   property string faceSuccessAssetSource: ""
   property string faceSuccessStyle: "mark"
   property bool faceMotionEnabled: true
+  property bool biometricsReady: true
+  readonly property bool showBiometricWaiting: !biometricsReady && (faceConfigured || fingerprintConfigured)
 
   readonly property string placeholderText: "Enter Password"
   readonly property int fieldWidth: 381
@@ -201,6 +203,7 @@ Item {
         anchors.rightMargin: inputField.borderRight + 18
         anchors.verticalCenter: parent.verticalCenter
         visible: root.fingerprintConfigured
+        opacity: root.biometricsReady ? 1 : 0.45
         text: "󰈷"
         color: Color.lock.placeholder
         font.family: Style.font.family
@@ -210,6 +213,19 @@ Item {
       }
     }
 
+    Text {
+      objectName: "biometricWaitingLabel"
+      anchors.top: inputField.bottom
+      anchors.topMargin: 12
+      anchors.horizontalCenter: parent.horizontalCenter
+      visible: root.showBiometricWaiting
+      text: "Waking…"
+      color: Color.lock.placeholder
+      font.family: Style.font.family
+      font.pixelSize: root.fieldFontSize
+      horizontalAlignment: Text.AlignHCenter
+    }
+
     FaceIdBadge {
       anchors.horizontalCenter: parent.horizontalCenter
       anchors.top: parent.top
@@ -217,6 +233,7 @@ Item {
       width: 104
       height: 104
       visible: root.faceConfigured
+      opacity: root.biometricsReady ? 1 : 0.6
       faceState: root.faceState
       assetSource: root.faceAssetSource
       successAssetSource: root.faceSuccessAssetSource

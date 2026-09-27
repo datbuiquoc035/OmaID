@@ -35,6 +35,7 @@ Item {
   property bool facePamConfigured: false
   property bool faceBridgeConfigured: false
   property bool faceConfigured: false
+  property bool biometricsReady: false
   property string faceState: "unavailable"
   property int faceAttempts: 0
   property int faceRequestCounter: 0
@@ -151,6 +152,8 @@ Item {
     faceAuthenticating = false
     faceAttempts = 0
     faceState = faceConfigured ? "idle" : "unavailable"
+    biometricsReady = false
+    biometricSettleTimer.stop()
     fingerprintRetryTimer.stop()
     faceRetryTimer.stop()
     faceSuccessTimer.stop()
@@ -158,6 +161,25 @@ Item {
     faceRequestId = ""
     if (passwordPam.active) passwordPam.abort()
     if (fingerprintPam.active) fingerprintPam.abort()
+  }
+
+  // Fixed 3s hold before fingerprint/face may start. Password stays live the
+  // whole time. Called on every normal lock and re-armed on resume-from-suspend
+  // (see resumeHeartbeat) so lid-close and `systemctl suspend` share one path.
+  function armBiometricSettle() {
+    biometricsReady = false
+    biometricSettleTimer.restart()
+    resumeHeartbeat.lastBeat = Date.now()
+    if (!resumeHeartbeat.running) resumeHeartbeat.start()
+  }
+
+  function handleResumeGap() {
+    if (!lockRequested) return
+    if (fingerprintPam.active) fingerprintPam.abort()
+    fingerprintAuthenticating = false
+    cancelFaceScan()
+    logEvent("resume: biometrics-settling")
+    armBiometricSettle()
   }
 
   function beginLock() {
@@ -169,6 +191,7 @@ Item {
     resetAuthenticationState()
     lockRequested = true
     armBlankTimer()
+    armBiometricSettle()
     logEvent("lock-requested")
     queueSessionLock()
 
@@ -191,6 +214,8 @@ Item {
     pendingSessionLockTimer.stop()
     resetAuthenticationState()
     idleBlankTimer.stop()
+    biometricSettleTimer.stop()
+    resumeHeartbeat.stop()
     sessionLock.locked = false
     logEvent("unlocked")
     runWake()
@@ -258,6 +283,7 @@ Item {
 
   function startFingerprint() {
     if (!lockRequested || !sessionLock.secure || !fingerprintConfigured) return
+    if (!biometricsReady) return
     if (fingerprintPam.active || fingerprintAuthenticating) return
 
     fingerprintAuthenticating = true
@@ -280,6 +306,7 @@ Item {
 
   function scheduleFaceStart() {
     if (!lockRequested || !sessionLock.secure || fingerprintConfigured) return
+    if (!biometricsReady) return
     if (!faceBridgeConfigured || !faceConfigured || faceAuthenticating) return
     if (enteredPassword.length > 0 || faceAttempts >= 2) return
 
@@ -288,6 +315,7 @@ Item {
 
   function startFace() {
     if (!lockRequested || !sessionLock.secure || !faceBridgeConfigured || !faceConfigured) return
+    if (!biometricsReady) return
     if (fingerprintConfigured || faceAuthenticating || enteredPassword.length > 0) return
     if (faceAttempts >= 2) return
 
@@ -377,8 +405,12 @@ Item {
         root.pendingSessionLock = false
         sessionLockStabilizeTimer.stop()
         pendingSessionLockTimer.stop()
-        root.startFingerprint()
-        if (!fingerprintConfigured) root.scheduleFaceStart()
+        // Biometric starts stay gated on biometricsReady. When secure wins the
+        // race against the 3s settle timer, the timer kicks them on expiry.
+        if (root.biometricsReady) {
+          root.startFingerprint()
+          if (!fingerprintConfigured) root.scheduleFaceStart()
+        }
       }
     }
 
@@ -397,6 +429,8 @@ Item {
         sessionLockStabilizeTimer.stop()
         pendingSessionLockTimer.stop()
         root.resetAuthenticationState()
+        biometricSettleTimer.stop()
+        resumeHeartbeat.stop()
         root.runWake()
       }
     }
@@ -412,6 +446,7 @@ Item {
         backgroundVersion: root.backgroundVersion
         fingerprintConfigured: root.fingerprintConfigured
         faceConfigured: root.faceConfigured
+        biometricsReady: root.biometricsReady
         faceState: root.faceState
         faceAssetSource: root.faceAssetSource
         faceSuccessAssetSource: root.faceSuccessAssetSource
@@ -451,6 +486,7 @@ Item {
       backgroundVersion: root.backgroundVersion
       fingerprintConfigured: root.fingerprintConfigured
       faceConfigured: root.faceConfigured
+      biometricsReady: true
       faceState: root.faceState
       faceAssetSource: root.faceAssetSource
       faceSuccessAssetSource: root.faceSuccessAssetSource
@@ -541,6 +577,38 @@ Item {
     onError: function(error) {
       root.fingerprintAuthenticating = false
       if (root.lockRequested && root.fingerprintConfigured) fingerprintRetryTimer.restart()
+    }
+  }
+
+  Timer {
+    id: biometricSettleTimer
+    interval: 3000
+    repeat: false
+    onTriggered: {
+      root.biometricsReady = true
+      root.logEvent("biometrics-ready")
+      if (root.lockRequested && sessionLock.secure) {
+        root.startFingerprint()
+        if (!root.fingerprintConfigured) root.scheduleFaceStart()
+      }
+    }
+  }
+
+  Timer {
+    id: resumeHeartbeat
+    interval: 1000
+    repeat: true
+    property double lastBeat: 0
+    onTriggered: {
+      var now = Date.now()
+      // Frozen across suspend, so a wall-clock jump here means resume.
+      // Covers both `systemctl suspend` and lid-close suspend with one path.
+      if (lastBeat > 0 && now - lastBeat > interval + 1500) {
+        lastBeat = now
+        root.handleResumeGap()
+        return
+      }
+      lastBeat = now
     }
   }
 
@@ -801,6 +869,7 @@ Item {
         sudoScanVisible: root.sudoScanVisible,
         sudoScanState: root.sudoScanState,
         authenticating: root.authenticating,
+        biometricsReady: root.biometricsReady,
         lastEvent: root.lastEvent,
         lastEventAt: root.lastEventAt
       })
